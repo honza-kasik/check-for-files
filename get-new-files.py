@@ -25,8 +25,12 @@ def get_variables(filename):
 
 #newfile - file containing new files paths
 def send_mail(newfile):
-	with open(newfile, 'r') as fp:
-		msg = MIMEText("Nalezeny nove soubory: \n" + fp.read())
+	msg = MIMEText("Nalezeny nove soubory!")
+
+	with open(newfile, 'r') as f:
+		attachment = MIMEText(f.read())
+	attachment.add_header('Content-Disposition', 'attachment', filename=newfile)
+	msg.attach(attachment)
 
 	msg['Subject'] = "Nalezeny nove soubory"
 	msg['From'] = conf.mail_addr_from
