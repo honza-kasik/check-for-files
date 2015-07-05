@@ -2,6 +2,11 @@
 #requires pymail, pysftp and sendmail
 from __future__ import print_function
 import smtplib
+from smtplib import SMTPException
+from email import encoders
+from email.message import Message
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import glob
 import os
@@ -14,8 +19,13 @@ import logging
 
 reload(sys)
 sys.setdefaultencoding('utf8')
-path_to_script = os.path.dirname(__file__)
-logging.basicConfig(filename=path_to_script + '/last-log.log', level=logging.INFO, format='%(asctime)s %(message)s')
+logging.basicConfig(filename='last-log.log', level=logging.INFO, format='%(asctime)s %(message)s')
+
+#http://stackoverflow.com/a/1432949
+def switch_to_script_location():
+	abspath = os.path.abspath(__file__)
+	dname = os.path.dirname(abspath)
+	os.chdir(dname)
 
 #http://stackoverflow.com/a/924719
 def get_variables(filename):
@@ -25,7 +35,8 @@ def get_variables(filename):
 
 #newfile - file containing new files paths
 def send_mail(newfile):
-	msg = MIMEText("Nalezeny nove soubory!")
+	msg = MIMEMultipart()
+	msg.attach(MIMEText("Nalezeny nove soubory!", 'plain'))
 
 	with open(newfile, 'r') as f:
 		attachment = MIMEText(f.read())
@@ -38,7 +49,7 @@ def send_mail(newfile):
 	try:
 	   server = smtplib.SMTP(conf.mail_smtp_server)
 	   server.login(conf.mail_smtp_user, conf.mail_smtp_pass)
-	   server.sendmail(odesilatel, prijemce, msg.as_string())
+	   server.sendmail(conf.mail_addr_from, conf.mail_addr_to, msg.as_string())
 	   logging.info("Mail byl uspesne odeslan")
 	except SMTPException:
 	   logging.error("Error: email nemohl byt odeslan")
@@ -77,12 +88,13 @@ def walk_and_write(fout, wtcb):
 
 def main():
 	logging.info("Skript spusten")
-	get_variables(path_to_script + "/configuration.ini")
+	get_variables("configuration.ini")
+	switch_to_script_location()
 	date = time.strftime('%y%m%d%H')
 	suffixlist = "_file-list.txt"
 	suffixchanges = "_changes.txt"
-	filename_list = path_to_script + "/" + date + suffixlist
-	filename_changes = path_to_script + "/" + date + suffixchanges
+	filename_list = date + suffixlist
+	filename_changes = date + suffixchanges
 	fout = open(filename_list, 'w')
 	files = []
 	wtcb = pysftp.WTCallbacks()
@@ -93,7 +105,7 @@ def main():
 	except pysftp.ConnectionException as e:
 		logging.error("Chyba pripojeni!")
 	else:
-		for file in glob.glob(path_to_script + "/*" + suffixlist):
+		for file in glob.glob("*" + suffixlist):
 			files.append(file)
 
 		if len(files) >= 2:
