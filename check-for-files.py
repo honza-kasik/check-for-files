@@ -96,8 +96,8 @@ def process_changes(files, filename_changes):
 
 def main():
 	logging.info("Skript spusten")
-	get_variables("configuration.ini")
 	switch_to_script_location()
+	get_variables("configuration.ini")
 	date = time.strftime('%y%m%d%H')
 	suffixlist = "_file-list.txt"
 	suffixchanges = "_changes.txt"
