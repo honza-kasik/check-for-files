@@ -18,7 +18,7 @@ import logging
 
 reload(sys)
 sys.setdefaultencoding('utf8')
-logging.basicConfig(filename='last-log.log', level=logging.INFO, format='%(asctime)s %(message)s')
+logging.basicConfig(filename='last-log.log', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
 #http://stackoverflow.com/a/1432949
 def switch_to_script_location():
