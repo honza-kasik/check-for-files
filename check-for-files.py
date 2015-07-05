@@ -67,23 +67,20 @@ def print_to_file(to_be_printed, fout):
 				file_out.write(line)
 
 def walk_and_write(fout, wtcb):
-	try:
-		with pysftp.Connection(
-			host=conf.sftp_host,
-			username=conf.sftp_user,
-			port=conf.sftp_port,
-			private_key=conf.sftp_key_path) as srv:
+	with pysftp.Connection(
+		host=conf.sftp_host,
+		username=conf.sftp_user,
+		port=conf.sftp_port,
+		private_key=conf.sftp_key_path) as srv:
 
-			# Walk through all paths on server
-			srv.walktree(conf.sftp_start_path, fcallback=wtcb.file_cb, dcallback=wtcb.dir_cb, ucallback=wtcb.unk_cb)
-			logging.info("Pocet polozek na serveru: " + str(len(wtcb.flist)))
-			print(len(wtcb.flist), file=fout)
+		# Walk through all paths on server
+		srv.walktree(conf.sftp_start_path, fcallback=wtcb.file_cb, dcallback=wtcb.dir_cb, ucallback=wtcb.unk_cb)
+		logging.info("Pocet polozek na serveru: " + str(len(wtcb.flist)))
+		print(len(wtcb.flist), file=fout)
 
-			# Prints out the directories and files, line by line to file
-			for fpath in wtcb.flist:
-			    print(fpath.encode('utf-8'), file=fout)
-	except pysftp.ConnectionException as e:
-		raise e
+		# Prints out the directories and files, line by line to file
+		for fpath in wtcb.flist:
+		    print(fpath.encode('utf-8'), file=fout)
 
 def process_changes(files, filename_changes):
 	files = sorted(files, reverse=True)
