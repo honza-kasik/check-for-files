@@ -1,5 +1,4 @@
 #!/usr/bin/python
-#requires pymail, pysftp and sendmail
 from __future__ import print_function
 import smtplib
 from smtplib import SMTPException
@@ -86,6 +85,18 @@ def walk_and_write(fout, wtcb):
 	except pysftp.ConnectionException as e:
 		raise e
 
+def process_changes(files, filename_changes):
+	files = sorted(files, reverse=True)
+	#get set of new filepaths by comparing two latest files
+	diff = get_file_difference(files[0], files[1])
+	if len(diff) > 1:
+		#if any new paths
+		logging.info("Nalezeny nove soubory")
+		print_to_file(diff, filename_changes)
+		send_mail(filename_changes)
+	else:
+		logging.info("Nenalezeny zadne nove soubory")
+
 def main():
 	logging.info("Skript spusten")
 	get_variables("configuration.ini")
@@ -95,30 +106,22 @@ def main():
 	suffixchanges = "_changes.txt"
 	filename_list = date + suffixlist
 	filename_changes = date + suffixchanges
-	fout = open(filename_list, 'w')
 	files = []
 	wtcb = pysftp.WTCallbacks()
 
-	#walktree and write to fout
 	try:
-		walk_and_write(fout, wtcb)
+		with open(filename_list, 'w') as fout:
+			walk_and_write(fout, wtcb)
 	except pysftp.ConnectionException as e:
 		logging.error("Chyba pripojeni!")
+	except IOError:
+		logging.error("Chyba I/O! - otevirani " + filename_list)
 	else:
 		for file in glob.glob("*" + suffixlist):
 			files.append(file)
 
 		if len(files) >= 2:
-			files = sorted(files, reverse=True)
-			#print to fout changes in last two files
-			diff = get_file_difference(files[0], files[1])
-			if len(diff) > 1:
-				#if any new changes
-				logging.info("Nalezeny nove soubory")
-				print_to_file(diff, filename_changes)
-				send_mail(filename_changes)
-	   		else:
-	         		logging.info("Nenalezeny zadne nove soubory")
+			process_changes(files, filename_changes)
 		else:
 			logging.info("Nenalezeny predchozi verze stavu.")
 
