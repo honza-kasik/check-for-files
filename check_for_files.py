@@ -17,7 +17,7 @@ logging.basicConfig(filename='last-log.log', level=logging.INFO, format='%(ascti
 
 
 def create_db() -> TinyDB:
-    """Creates new database with registred datetime serializer"""
+    """Creates new database with registered datetime serializer"""
     serialization = SerializationMiddleware()
     serialization.register_serializer(DateTimeSerializer(), 'TinyDate')
     db = TinyDB('db.json', storage=serialization)
@@ -37,8 +37,8 @@ def load_variables(filename):
     conf.read(filename)
 
 
-def compose_mail(attached_file):
-    """Returns composed MimeMultipart"""
+def compose_mail(attached_file) -> MIMEMultipart:
+    """Composes MIMEMultipart and attaches attached_file"""
     msg = MIMEMultipart()
     text = MIMEText('Nalezeny nove soubory!', 'plain', 'utf8')
     msg.attach(text)
