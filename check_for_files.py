@@ -111,7 +111,7 @@ def process_new_entries(entries):
 def main():
     chroot_to_script_location()
     now = datetime.now()
-    logging.info("Script started on " + now.strftime('%Y-%m-%dT%H:%M:%S'))
+    logging.info("Script started")
     load_variables("configuration.ini")
     db = create_db()
 
