@@ -3,8 +3,9 @@ Simple python script to retrieve filepaths from sftp server and send alert email
 
 ##Requirements
 
-* Python 3
-* email package for email composing
-* smtplib package for sending email
-* pysftp package for sftp related operations
-* tinydb package for filepaths handling
+* **Python 3**
+* Packages:
+  * `email` - email composing
+  * `smtplib` - sending email
+  * `pysftp` - sftp related operations
+  * `tinydb` - filepaths storage and handling
