@@ -31,7 +31,6 @@ def chroot_to_script_location():
     os.chdir(dname)
 
 
-# http://stackoverflow.com/a/924719
 def load_variables(filename):
     global conf
     conf = configparser.ConfigParser()
