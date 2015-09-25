@@ -2,6 +2,7 @@
 *.ini
 *.log
 *.json
+*.txt
 
 # IDEA
 .idea/

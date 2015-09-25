@@ -16,7 +16,7 @@ import configparser
 logging.basicConfig(filename='last-log.log', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
 
-def create_db() -> TinyDB:
+def prepare_db() -> TinyDB:
     """Creates new database with registered datetime serializer"""
     serialization = SerializationMiddleware()
     serialization.register_serializer(DateTimeSerializer(), 'TinyDate')
@@ -96,12 +96,12 @@ def process_new_entries(entries):
     """Processes new entries:
     If there are not any new entries, do nothing, else write them in file and send email
     """
-    changes = datetime.strftime('%y%m%d%H') + "_changes.txt"
+    changes = datetime.now().strftime('%y%m%d%H') + "_changes.txt"
     if not len(entries) == 0:
         logging.info("Found " + str(len(entries)) + " new files.")
         with open(changes, 'w') as file_out:
             for entry in entries:
-                file_out.write(entry['path'])
+                file_out.write(entry['path'] + '\n')
         send_mail(changes)
     else:
         logging.info("No new files found.")
@@ -112,7 +112,7 @@ def main():
     now = datetime.now()
     logging.info("Script started")
     load_variables("configuration.ini")
-    db = create_db()
+    db = prepare_db()
 
     try:
         walk_and_write_to_db(db)
@@ -121,8 +121,9 @@ def main():
     except IOError:
         logging.error("I/O error during handling with database!")
     else:
-        new_entries = db.search(where('datetime' >= now))
+        new_entries = db.search(where('datetime') >= now)
         process_new_entries(new_entries)
+        logging.info("Script finished successfully.")
 
 
 main()
