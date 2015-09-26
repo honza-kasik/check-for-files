@@ -4,7 +4,7 @@ from smtplib import SMTPException
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import pysftp
 import logging
 from tinydb import TinyDB, where
@@ -16,11 +16,11 @@ import configparser
 logging.basicConfig(filename='last-log.log', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
 
-def prepare_db() -> TinyDB:
+def prepare_db(name: str) -> TinyDB:
     """Creates new database with registered datetime serializer"""
     serialization = SerializationMiddleware()
     serialization.register_serializer(DateTimeSerializer(), 'TinyDate')
-    db = TinyDB('db.json', storage=serialization)
+    db = TinyDB(name, storage=serialization)
     return db
 
 
@@ -37,7 +37,7 @@ def load_variables(filename):
     conf.read(filename)
 
 
-def compose_mail(attached_file) -> MIMEMultipart:
+def compose_mail(attached_file: str) -> MIMEMultipart:
     """Composes MIMEMultipart and attaches attached_file"""
     msg = MIMEMultipart()
     text = MIMEText('Nalezeny nove soubory!', 'plain', 'utf8')
@@ -55,7 +55,7 @@ def compose_mail(attached_file) -> MIMEMultipart:
     return msg
 
 
-def send_mail(attachment_file):
+def send_mail(attachment_file: str):
     """Sends mail using values specified in conf file"""
     msg = compose_mail(attachment_file)
     server = smtplib.SMTP(conf.get('mail', 'smtp_server'))
@@ -92,19 +92,29 @@ def walk_and_write_to_db(db: TinyDB):
             db.insert({'path': path, 'datetime': datetime.now()})
 
 
-def process_new_entries(entries):
+def process_new_entries(entries, changelog_db: TinyDB):
     """Processes new entries:
-    If there are not any new entries, do nothing, else write them in file and send email
+    If there are not any new entries, do nothing, else write them in file and send email.
+    It also saves name of file with changes to db for its better managing.
     """
-    changes = datetime.now().strftime('%y%m%d%H') + "_changes.txt"
+    changelog = datetime.now().strftime('%y%m%d%H') + "_changelog.txt"
     if not len(entries) == 0:
         logging.info("Found " + str(len(entries)) + " new files.")
-        with open(changes, 'w') as file_out:
+        with open(changelog, 'w') as file_out:
             for entry in entries:
                 file_out.write(entry['path'] + '\n')
-        send_mail(changes)
+        send_mail(changelog)
+        changelog_db.insert({'path': changelog, 'datetime': datetime.now()})
     else:
         logging.info("No new files found.")
+
+
+def clean_old_files(changelog_table: TinyDB, now: datetime):
+    keep_from = now - timedelta(weeks=1)
+    to_be_cleaned = changelog_table.search(where('datetime') <= keep_from)
+    for entry in to_be_cleaned:
+        os.remove(entry['path'])
+        changelog_table.remove(where('path') == entry['path'])
 
 
 def main():
@@ -112,17 +122,20 @@ def main():
     now = datetime.now()
     logging.info("Script started")
     load_variables("configuration.ini")
-    db = prepare_db()
+    db = prepare_db('db.json')
+    changelog_table = db.table('changelogs')
+    filepath_table = db.table('filepaths')
 
     try:
-        walk_and_write_to_db(db)
+        walk_and_write_to_db(filepath_table)
     except pysftp.ConnectionException:
         logging.error("Connection error!")
     except IOError:
         logging.error("I/O error during handling with database!")
     else:
-        new_entries = db.search(where('datetime') >= now)
-        process_new_entries(new_entries)
+        new_entries = filepath_table.search(where('datetime') >= now)
+        process_new_entries(new_entries, changelog_table)
+        clean_old_files(changelog_table, now)
         logging.info("Script finished successfully.")
 
 
