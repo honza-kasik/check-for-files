@@ -44,7 +44,7 @@ def compose_mail(attached_file: str) -> MIMEMultipart:
     msg.attach(text)
 
     with open(attached_file, 'r') as f:
-        attachment = MIMEText(f.read())
+        attachment = MIMEText(f.read(), "plain", "utf-8")
     attachment.add_header('Content-Disposition', 'attachment', filename=attached_file)
     msg.attach(attachment)
 
