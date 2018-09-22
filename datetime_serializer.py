@@ -1,5 +1,5 @@
 from datetime import datetime
-from tinydb.serialize import Serializer
+from tinydb_serialization import Serializer
 
 
 class DateTimeSerializer(Serializer):
