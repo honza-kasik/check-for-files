@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import pysftp
 import logging
 from tinydb import TinyDB, where
-from tinydb.middlewares import SerializationMiddleware
+from tinydb_serialization import SerializationMiddleware
 from datetime_serializer import DateTimeSerializer
 import configparser
 

@@ -1,7 +1,7 @@
 # check-for-files
 Simple python script to retrieve filepaths from SFTP server and send alert email with new filepaths. After each start of script it walks the filetree, compares it to already saved items and sends an email notification to configured email address if there are any new files. TinyDB is used to store changes locally.
 
-This script is probalby only useful to you, when you have no other access to server than SFTP, as in my case. 
+This script is probably only useful to you, when you have no other access to server than SFTP, as in my case.
 
 ## Configuration
 
@@ -34,3 +34,10 @@ start_path: /             //Path on which the script starts recursive searching
   * `smtplib` - sending email
   * `pysftp` - sftp related operations
   * `tinydb` - filepaths storage and handling
+  * `tinydb_serialization` - object serialization for storage purposes
+
+## Changelog
+
+### 18-09-22
+
+Due to the [changes in TinyDB](https://tinydb.readthedocs.io/en/latest/changelog.html#v3-0-0-2015-11-13) imports were updated to make this script working with latest TinyDB (3.11.1).
